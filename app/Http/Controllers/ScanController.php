@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use RealRashid\SweetAlert\Facades\Alert;
 use App\Models\Absen;
+use App\Models\WaktuAbsen;
 use Carbon\Carbon;
 use DateTime;
 use Illuminate\Http\Request;
@@ -13,33 +14,42 @@ class ScanController extends Controller
 {
     public function index()
     {
-        $id = auth()->user()->id;
-        $tanggal = Carbon::now()->format('Y-m-d');
-        $cekUser = Absen::where('user_id', $id)->where('tanggal', $tanggal)->first();
+        if (auth()->user()->level == 'user') {
+            $id = auth()->user()->id;
+            $tanggal = Carbon::now()->format('Y-m-d');
+            $data = Absen::where('user_id', $id)->where('tanggal', $tanggal)->first();
 
-        // cek session alert
-        if (session('success')) {
-            Alert::success('Berhasil', session('success'));
-        } else if (session("error")) {
-            Alert::error('Gagal', session('error'));
-        } else if (session('info')) {
-            Alert::info('Info', session('info'));
+            // cek session alert
+            if (session('success')) {
+                Alert::success('Berhasil', session('success'));
+            } else if (session("error")) {
+                Alert::error('Gagal', session('error'));
+            } else if (session('info')) {
+                Alert::info('Info', session('info'));
+            }
+        } else {
+            $data = Absen::orderBy('tanggal', 'DESC')->get();
+            confirmDelete('Konfirmasi', 'Hapus data ini?');
         }
 
+        $waktuAbsen = WaktuAbsen::get()->first();
         return view('scan', [
-            'absen' => $cekUser
+            'absen' => $data,
+            'waktuAbsen' => $waktuAbsen,
         ]);
     }
+
 
     public function validasi(Request $request)
     {
         $stringHash = 'qwerty123';
         if (Hash::check($stringHash, $request->qr_kode)) {
+            $waktuAbsen = WaktuAbsen::get()->first();
 
             // ettingan waktu keterlambatan
             $current_time = new DateTime();
-            $start_time = new DateTime('08:00');
-            $end_time = new DateTime('08:15');
+            $start_time = new DateTime($waktuAbsen->mulai);
+            $end_time = new DateTime($waktuAbsen->selesai);
 
             // cek kalau belum waktu absen
             if ($start_time > $current_time) {

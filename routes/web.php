@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\KelolaAbsenController;
 use App\Http\Controllers\ProfilController;
 use App\Http\Controllers\ScanController;
 use Illuminate\Support\Facades\Artisan;
@@ -27,9 +28,9 @@ Route::post('/login', [AuthController::class, 'authenticate'])->middleware('gues
 Route::get('/logout', [AuthController::class, 'logout'])->middleware('auth');
 
 Route::get('/', [ScanController::class, 'index'])->middleware('auth');
-Route::get('/riwayat-absen', [ScanController::class, 'riwayatAbsen'])->middleware('auth');
+Route::get('/riwayat-absen', [ScanController::class, 'riwayatAbsen'])->middleware('auth')->can('user');
 
-Route::post('/validasi', [ScanController::class, 'validasi'])->middleware('auth');
+Route::post('/validasi', [ScanController::class, 'validasi'])->middleware('auth')->can('user');
 
 Route::get('/scan', function () {
     return view('scan-absen');
@@ -37,3 +38,10 @@ Route::get('/scan', function () {
 
 Route::get('/profil', [ProfilController::class, 'index'])->middleware('auth');
 Route::put('/profil', [ProfilController::class, 'update'])->middleware('auth');
+
+// admin
+Route::post('/data-absen', [KelolaAbsenController::class, 'store'])->middleware('auth')->can('admin');
+Route::put('/data-absen', [KelolaAbsenController::class, 'update'])->middleware('auth')->can('admin');
+Route::delete('/data-absen/{userId}', [KelolaAbsenController::class, 'delete'])->middleware('auth')->can('admin');
+
+Route::put('/waktu-absen', [KelolaAbsenController::class, 'updateWaktuAbsen'])->middleware('auth')->can('admin');
